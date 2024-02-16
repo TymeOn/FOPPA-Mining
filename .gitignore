@@ -161,3 +161,6 @@ cython_debug/
 
 # Elements in data folder
 /data/*.csv
+
+# IDE folder
+.idea/*

@@ -86,12 +86,13 @@ def load_data():
         if os.path.exists(path):
             print("> Chargement du fichier " + file_name + "...")
             dataframe = pd.read_csv(path, dtype=column_types[file_name])
+
+            if file_name == "Lots":
+                dataframe[boolean_columns] = dataframe[boolean_columns].map(lambda x: True if x == "Y" else False)
+
             dataframes[file_name] = dataframe
         else:
             print(f"Le fichier {path} n'existe pas.")
-
-    # Converting the Y/N values into actual booleans
-    dataframes["Lots"] = dataframes["Lots"].replace({"Y": True, "N": False})
 
     return
 
