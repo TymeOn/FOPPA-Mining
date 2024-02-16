@@ -3,6 +3,79 @@ import os
 
 dataframes = {}
 file_names = ["Agents", "Criteria", "LotBuyers", "Lots", "LotSuppliers", "Names"]
+column_types = {
+    "Agents": {
+        "agentId": "Int64",
+        "name": "str",
+        "siret": "str",
+        "address": "str",
+        "city": "str",
+        "zipcode": "str",
+        "country": "str",
+        "department": "str",
+        "longitude": "Float64",
+        "latitude": "Float64"
+    },
+    "Criteria": {
+        "criterionId": "Int64",
+        "lotId": "Int64",
+        "name": "str",
+        "weight": "Float64",
+        "type": "str"
+    },
+    "LotBuyers": {
+        "lotId": "Int64",
+        "agentId": "Int64"
+    },
+    "Lots": {
+        "lotId": "Int64",
+        "tedCanId": "Int64",
+        "correctionsNb": "Int64",
+        "cancelled": "str", # bool
+        "awardDate": "str",
+        "awardEstimatedPrice": "Float64",
+        "awardPrice": "Float64",
+        "cpv": "str",
+        "numberTenders": "Int64",
+        "onBehalf": "str", # bool
+        "jointProcurement": "str", # bool
+        "fraAgreement": "str", # bool
+        "fraEstimated": "str",
+        "lotsNumber": "str",
+        "accelerated": "str", # bool
+        "outOfDirectives": "str", # bool
+        "contractorSme": "str", # bool
+        "numberTendersSme": "Int64",
+        "subContracted": "str", # bool
+        "gpa": "str", # bool
+        "multipleCae": "str",
+        "typeOfContract": "str",
+        "topType": "str",
+        "renewal": "str", # bool
+        "contractDuration": "Float64",
+        "publicityDuration": "Float64"
+    },
+    "LotSuppliers": {
+        "lotId": "Int64",
+        "agentId": "Int64"
+    },
+    "Names": {
+        "agentId": "Int64",
+        "names": "str"
+    }
+}
+boolean_columns = [
+    "cancelled",
+    "onBehalf",
+    "jointProcurement",
+    "fraAgreement",
+    "accelerated",
+    "outOfDirectives",
+    "contractorSme",
+    "subContracted",
+    "gpa",
+    "renewal"
+]
 
 # Loading the specified CSV files into dataframes
 def load_data():
@@ -12,10 +85,13 @@ def load_data():
         # Loading the individual file into a dataframe
         if os.path.exists(path):
             print("> Chargement du fichier " + file_name + "...")
-            dataframe = pd.read_csv(path)
+            dataframe = pd.read_csv(path, dtype=column_types[file_name])
             dataframes[file_name] = dataframe
         else:
             print(f"Le fichier {path} n'existe pas.")
+
+    # Converting the Y/N values into actual booleans
+    dataframes["Lots"] = dataframes["Lots"].replace({"Y": True, "N": False})
 
     return
 
