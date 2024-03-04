@@ -41,7 +41,7 @@ column_types = {
         "jointProcurement": "str", # bool
         "fraAgreement": "str", # bool
         "fraEstimated": "str",
-        "lotsNumber": "str",
+        "lotsNumber": "str", # Int64
         "accelerated": "str", # bool
         "outOfDirectives": "str", # bool
         "contractorSme": "str", # bool
@@ -76,6 +76,10 @@ boolean_columns = [
     "gpa",
     "renewal"
 ]
+integer_columns = [
+    "lotsNumber"
+]
+
 
 # Loading the specified CSV files into dataframes
 def load_data():
@@ -89,12 +93,14 @@ def load_data():
 
             if file_name == "Lots":
                 dataframe[boolean_columns] = dataframe[boolean_columns].map(lambda x: True if x == "Y" else False)
+                dataframe[integer_columns] = dataframe[integer_columns].apply(pd.to_numeric, errors='coerce')
 
             dataframes[file_name] = dataframe
         else:
             print(f"Le fichier {path} n'existe pas.")
 
     return
+
 
 # Main function
 if __name__ == "__main__":
@@ -107,3 +113,7 @@ if __name__ == "__main__":
         print(f"DataFrame pour le fichier {filename}:")
         print(df.head())
         print("\n")
+
+    # for file_name in file_names:
+    #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
+
