@@ -102,6 +102,32 @@ def load_data():
     return
 
 
+# Calculating standard statistics
+def calculate_statistics():
+    for file_name in file_names:
+        if file_name == "Lots":
+            # Select only numeric columns
+            numeric_columns = ["lotId", "tedCanId", "correctionsNb", "awardEstimatedPrice", "awardPrice",
+                               "numberTenders", "lotsNumber", "numberTendersSme", "contractDuration",
+                               "publicityDuration"]
+            numeric_data = dataframes[file_name][numeric_columns]
+
+            # Calculate statistics
+            stats = numeric_data.describe()
+
+            # Calculate mode
+            mode = numeric_data.mode().iloc[0]
+
+            # Display statistics
+            print(f"\nStatistiques pour le fichier {file_name}:")
+            print(stats)
+
+            # Display mode
+            print("\n##### Mode #####")
+            for col, val in mode.items():
+                print(f"{col}: {val}")
+
+
 # Main function
 if __name__ == "__main__":
 
@@ -114,6 +140,11 @@ if __name__ == "__main__":
         print(df.head())
         print("\n")
 
+    # Calculating standard statistics
+    calculate_statistics()
+
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
+
+    # Mesure d'association (Corréaltion pisson standard)
 
