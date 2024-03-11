@@ -82,6 +82,15 @@ boolean_columns = [
 integer_columns = [
     "lotsNumber"
 ]
+limit_columns = {
+    "awardEstimatedPrice": 1000000,
+    "awardPrice": 1000000,
+    "contractDuration": 365,
+    "lotsNumber": 300,
+    "publicityDuration": 120,
+    "numberTenders": 120
+}
+
 # Loading the specified CSV files into dataframes
 def load_data():
     for file_name in file_names:
@@ -95,8 +104,13 @@ def load_data():
             if file_name == "Lots":
                 dataframe[boolean_columns] = dataframe[boolean_columns].map(lambda x: True if x == "Y" else False)
                 dataframe[integer_columns] = dataframe[integer_columns].apply(pd.to_numeric, errors='coerce')
+                for col, limit in limit_columns.items():
+                    dataframe[col] = dataframe[col].map(lambda x: x if x is None or pd.isna(x) or (0 <= x <= limit) else None)
 
-            dataframes[file_name] = dataframe
+            na_free = dataframe.dropna()
+            only_na = dataframe[~dataframe.index.isin(na_free.index)]
+            print(only_na.head())
+            dataframes[file_name] = na_free
         else:
             print(f"Le fichier {path} n'existe pas.")
 
@@ -104,19 +118,19 @@ def load_data():
 
 number_lots_columns = [
     # "correctionsNb",
-    # "awardEstimatedPrice",
-    # "awardPrice",
+    "awardEstimatedPrice",
+    "awardPrice",
     "numberTenders",
-    # "lotsNumber",
+    "lotsNumber",
     "numberTendersSme",
-    "contractDuration"
-    # "publicityDuration"
+    "contractDuration",
+    "publicityDuration"
 ]
 
 def data_analysis():
     for number_lots_column in number_lots_columns:
         plt.title(f"{number_lots_column} frequence")
-        data = dataframes["Lots"][number_lots_column]
+        data = pd.to_numeric(dataframes["Lots"][number_lots_column], errors='coerce')
         data = data.dropna().sort_values()
         chart_data = {}
         max_value = int(max(data))
