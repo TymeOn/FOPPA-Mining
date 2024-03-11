@@ -107,10 +107,11 @@ def load_data():
                 for col, limit in limit_columns.items():
                     dataframe[col] = dataframe[col].map(lambda x: x if x is None or pd.isna(x) or (0 <= x <= limit) else None)
 
-            na_free = dataframe.dropna()
-            only_na = dataframe[~dataframe.index.isin(na_free.index)]
-            print(only_na.head())
-            dataframes[file_name] = na_free
+            # na_free = dataframe.dropna()
+            # only_na = dataframe[~dataframe.index.isin(na_free.index)]
+            # only_na.to_csv("removedData/removed" + file_name + ".csv", sep=';', decimal=',', float_format='%.3f')
+            # print(only_na.head())
+            dataframes[file_name] = dataframe
         else:
             print(f"Le fichier {path} n'existe pas.")
 
