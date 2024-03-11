@@ -91,6 +91,14 @@ limit_columns = {
     "numberTenders": 120
 }
 limit_counter = {}
+essentials_columns = {
+    "Agents" : ["agentId", "name", "siret", "address", "city", "zipcode", "country"],
+    "Criteria" : [],
+    "LotBuyers" : [],
+    "Lots" : ["lotId", "lotsNumber", "awardPrice", "awardDate", "typeOfContract", "numberTenders"],
+    "LotSuppliers" : [],
+    "Names" : [],
+}
 
 # Loading the specified CSV files into dataframes
 def load_data():
@@ -111,10 +119,14 @@ def load_data():
                     final_na = dataframe[col].isna().sum()
                     limit_counter[col] = final_na - initial_na
 
-                na_free = dataframe.dropna(subset=["lotsNumber", "awardPrice", "awardDate", "typeOfContract", "numberTenders"])
-                only_na = dataframe[~dataframe.index.isin(na_free.index)]
-                only_na.to_csv("removedData/removed" + file_name + ".csv", sep=';', decimal=',', float_format='%.3f')
-                dataset = na_free
+
+            if essentials_columns[file_name] == [] :
+                na_free = dataframe.dropna()
+            else :
+                na_free = dataframe.dropna(subset=essentials_columns[file_name])
+            only_na = dataframe[~dataframe.index.isin(na_free.index)]
+            only_na.to_csv("removedData/removed" + file_name + ".csv", sep=';', decimal=',', float_format='%.3f')
+            dataframe = na_free
 
             dataframes[file_name] = dataframe
         else:
