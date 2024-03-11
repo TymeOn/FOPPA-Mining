@@ -90,6 +90,7 @@ limit_columns = {
     "publicityDuration": 120,
     "numberTenders": 120
 }
+limit_counter = {}
 
 # Loading the specified CSV files into dataframes
 def load_data():
@@ -105,12 +106,16 @@ def load_data():
                 dataframe[boolean_columns] = dataframe[boolean_columns].map(lambda x: True if x == "Y" else False)
                 dataframe[integer_columns] = dataframe[integer_columns].apply(pd.to_numeric, errors='coerce')
                 for col, limit in limit_columns.items():
+                    initial_na = dataframe[col].isna().sum()
                     dataframe[col] = dataframe[col].map(lambda x: x if x is None or pd.isna(x) or (0 <= x <= limit) else None)
+                    final_na = dataframe[col].isna().sum()
+                    limit_counter[col] = final_na - initial_na
 
-            # na_free = dataframe.dropna()
-            # only_na = dataframe[~dataframe.index.isin(na_free.index)]
-            # only_na.to_csv("removedData/removed" + file_name + ".csv", sep=';', decimal=',', float_format='%.3f')
-            # print(only_na.head())
+                na_free = dataframe.dropna(subset=["lotsNumber", "awardPrice", "awardDate", "typeOfContract", "numberTenders"])
+                only_na = dataframe[~dataframe.index.isin(na_free.index)]
+                only_na.to_csv("removedData/removed" + file_name + ".csv", sep=';', decimal=',', float_format='%.3f')
+                dataset = na_free
+
             dataframes[file_name] = dataframe
         else:
             print(f"Le fichier {path} n'existe pas.")
@@ -141,7 +146,7 @@ def data_analysis():
         print("min: ", min_value, "\n")
         
         # Partager le tableau de valeurs du graphique en part égales
-        nb_part = 10
+        nb_part = 50
         step = int((max_value - min_value)/nb_part)
         if(step < 1):step =1
         index = int(min_value)
@@ -174,7 +179,7 @@ def data_analysis():
                 csv_writer.writerow([x, y])
         
         plt.figure(figsize=(10, 6))
-        plt.bar(x_values, y_values, width=10)
+        plt.scatter(x_values, y_values, s=50, color='blue', alpha=0.7)
         plt.xlabel('Number')
         plt.ylabel('Frequency')
         plt.title(f"Frequency Chart {number_lots_column}")
@@ -188,6 +193,8 @@ if __name__ == "__main__":
     load_data()
 
     # DEBUG DISPLAY
+
+    print("Valeurs numériques dépassant les limites définies :", limit_counter)
     
     for filename, df in dataframes.items():
         print(f"DataFrame pour le fichier {filename}:")
