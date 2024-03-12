@@ -123,17 +123,16 @@ def str_statistics(table_name):
 
         # Parcourir chaque colonne
         for column, dtype in column_types[table_name].items():
+            print(f"\nChamp: {column}")
+            # Afficher la valeur la plus courante
+            most_common_value = str_data[column].mode().iloc[0]
+            print(f"\nLa valeur la plus courante : {most_common_value}")
+
             if dtype == "str":
                 unique_values = str_data[column].unique()
 
                 # Si le nombre de valeurs uniques est supérieur à 1, il y a des valeurs différentes
                 if len(unique_values) > 1:
-                    print(f"\nChamp: {column}")
-
-                    # Afficher la valeur la plus courante
-                    most_common_value = str_data[column].mode().iloc[0]
-                    print(f"\nLa valeur la plus courante : {most_common_value}")
-
                     print(f"\nValeurs différentes : {unique_values}")
 
                     # Afficher le nombre de fois que chaque valeur apparaît
@@ -190,22 +189,6 @@ def display_criterion_count_per_lot():
     print(criterion_count_per_lot.describe())
 
 
-def describe_weight_of_criteria():
-    """
-    Affiche les statistiques descriptives du poids (weight) de Criteria,
-    ainsi que le mode.
-    """
-    criteriaDataframe = dataframes["Criteria"].dropna(subset=['weight'])
-
-    print("Statistiques descriptives du poids (weight) de Criteria:")
-    print(criteriaDataframe["weight"].describe())
-
-    # Afficher le mode du poids
-    mode_weight = criteriaDataframe["weight"].mode()
-    print("Mode du poids (weight) de Criteria:")
-    print(mode_weight)
-
-
 # Main function
 if __name__ == "__main__":
 
@@ -229,7 +212,6 @@ if __name__ == "__main__":
     calculate_standard_statistics("Criteria")
     str_statistics("Criteria")
     display_criterion_count_per_lot()
-    describe_weight_of_criteria()
 
     calculate_standard_statistics("Names")
     str_statistics("Names")
