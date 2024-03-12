@@ -3,6 +3,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import csv
+import graphMaker
 
 dataframes = {}
 file_names = ["Agents", "Criteria", "LotBuyers", "Lots", "LotSuppliers", "Names"]
@@ -135,7 +136,6 @@ def load_data():
     return
 
 number_lots_columns = [
-    # "correctionsNb",
     "awardEstimatedPrice",
     "awardPrice",
     "numberTenders",
@@ -145,59 +145,28 @@ number_lots_columns = [
     "publicityDuration"
 ]
 
+
+    
+# Schéma et donnnées 
 def data_analysis():
+    for column in number_lots_columns:
+        plt.title(f"{column} frequence")
+        data = pd.to_numeric(dataframes["Lots"][column], errors='coerce')
+        graphMaker.graph_frequency_maker(data, column)
+    data = pd.to_numeric(dataframes["Criteria"]["weight"], errors='coerce')
+    graphMaker.graph_frequency_maker(data, column)
+    
+    data1 = dataframes["Lots"]["typeOfContract"]
     for number_lots_column in number_lots_columns:
-        plt.title(f"{number_lots_column} frequence")
-        data = pd.to_numeric(dataframes["Lots"][number_lots_column], errors='coerce')
-        data = data.dropna().sort_values()
-        chart_data = {}
-        max_value = int(max(data))
-        min_value = int(min(data))
-        print(number_lots_column, ":\n")
-        print("max: ", max_value, "\n")
-        print("min: ", min_value, "\n")
+        data2 = pd.to_numeric(dataframes["Lots"][number_lots_column], errors='coerce')
+
+        # Create a new DataFrame with the desired columns
+        data = pd.DataFrame({'typeOfContract': data1, number_lots_column: data2})
         
-        # Partager le tableau de valeurs du graphique en part égales
-        nb_part = 50
-        step = int((max_value - min_value)/nb_part)
-        if(step < 1):step =1
-        index = int(min_value)
-        while index < max_value:
-            chart_data[index] = 0
-            if index < 0:
-                chart_data[0] = 0
-            index += step
-        # Ajoute les fréquences des termes dans le tableau
-        for value in data:
-            # trouve la bonne catégorie pour la valeur
-            for i in chart_data.keys():
-                if int(value) < int(i):
-                    break
-                index = i
-            chart_data[index] += 1
-            
-        print(chart_data)
-        # Créer un histogramme
-        x_values = list(chart_data.keys())
-        y_values = list(chart_data.values())
-        delimiter = ';'
-        csv_file_path = f"troubles/{number_lots_column}.csv"
-        with open(csv_file_path, mode='w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=delimiter)
+        graphMaker.graph_double_maker(data, "typeOfContract", number_lots_column)
 
-            csv_writer.writerow(['Number', 'Frequency'])
 
-            for x, y in zip(x_values, y_values):
-                csv_writer.writerow([x, y])
-        
-        plt.figure(figsize=(10, 6))
-        plt.scatter(x_values, y_values, s=50, color='blue', alpha=0.7)
-        plt.xlabel('Number')
-        plt.ylabel('Frequency')
-        plt.title(f"Frequency Chart {number_lots_column}")
-        plt.xlim(min(x_values), max(x_values))
-        plt.savefig(f"charts/{number_lots_column}_frequency_chart.png")
-
+#
 # Main function
 if __name__ == "__main__":
 
@@ -205,8 +174,6 @@ if __name__ == "__main__":
     load_data()
 
     # DEBUG DISPLAY
-
-    print("Valeurs numériques dépassant les limites définies :", limit_counter)
     
     for filename, df in dataframes.items():
         print(f"DataFrame pour le fichier {filename}:")
