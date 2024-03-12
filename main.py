@@ -114,6 +114,9 @@ def calculate_standard_statistics(table_name):
             # Calculate statistics
             stats = numeric_data.describe()
 
+            message = "Statistiques standard pour le champ " + column + " :"
+            save_statistics(table_name, column, stats, "standard", message)
+
             # Display statistics
             print(stats)
 
@@ -126,22 +129,30 @@ def str_statistics(table_name):
             print(f"\nChamp: {column}")
             # Afficher la valeur la plus courante
             most_common_value = str_data[column].mode().iloc[0]
-            print(f"\nLa valeur la plus courante : {most_common_value}")
+            message= "La valeur la plus courante : "
+            print(f"\n{message}{most_common_value}")
+            save_statistics(table_name, column, most_common_value, "mode", message)
 
             if dtype == "str":
                 unique_values = str_data[column].unique()
 
                 # Si le nombre de valeurs uniques est supérieur à 1, il y a des valeurs différentes
                 if len(unique_values) > 1:
-                    print(f"\nValeurs différentes : {unique_values}")
+                    message = "Valeurs différentes :"
+                    print(f"\n{message} {unique_values}")
+                    save_statistics(table_name, column, unique_values, "str", message)
 
                     # Afficher le nombre de fois que chaque valeur apparaît
                     value_counts = str_data[column].value_counts()
-                    print(f"\nNombre de fois que chaque valeur apparaît : {value_counts}")
+                    message = "Nombre de fois que chaque valeur apparaît : "
+                    print(f"\n{message} {value_counts}")
+                    save_statistics(table_name, column, value_counts, "str", message)
 
                     # Afficher le nombre de valeurs uniques
                     unique_count = len(unique_values)
-                    print(f"\nNombre de valeurs uniques dans la colonne '{column}' : {unique_count}")
+                    message = "Nombre de valeurs uniques : "
+                    print(f"\n{message} {unique_count}")
+                    save_statistics(table_name, column, unique_count, "str", message)
 
 
 def display_unique_coordinates():
@@ -157,20 +168,28 @@ def display_unique_coordinates():
     coordinates = dataframeAgent["latitude"].astype(str) + "," + dataframeAgent["longitude"].astype(str)
 
     # Afficher le nombre de fois que chaque valeur apparaît
-    print(f"Nombre de fois que chaque combinaison de latitude et longitude apparaît dans le dataframe Agents :")
-    print(coordinates.value_counts())
+    coordinates_count = coordinates.value_counts()
+    message = "Nombre de fois que chaque combinaison de latitude et longitude apparaît"
+    print(f"{message} dans le dataframe Agents : {coordinates_count}")
+    save_statistics("Agents", "latitude-longitude", coordinates_count, "str", message + " : ")
 
     # Afficher la valeur la plus courante
     most_common_coordinates = coordinates.mode().iloc[0]
-    print(f"La combinaison de latitude et longitude la plus courante dans le dataframe Agents : {most_common_coordinates}")
+    message = "La combinaison de latitude et longitude la plus courante"
+    print(f"{message} dans le dataframe Agents : {most_common_coordinates}")
+    save_statistics("Agents", "latitude-longitude", most_common_coordinates, "str", message + " : ")
 
     # Afficher les valeurs différentes
     unique_coordinates = coordinates.unique()
-    print(f"Combinaisons de latitude et longitude différentes dans le dataframe Agents : {unique_coordinates}")
+    message = "Combinaisons de latitude et longitude différentes"
+    print(f"{message} dans le dataframe Agents : {unique_coordinates}")
+    save_statistics("Agents", "latitude-longitude", unique_coordinates, "str", message + " : ")
 
     # Afficher le nombre total de combinaisons uniques de latitude et longitude
     unique_count = len(unique_coordinates)
-    print(f"Nombre total de combinaisons uniques de latitude et longitude dans le dataframe Agents : {unique_count}")
+    message = "Nombre total de combinaisons uniques de latitude et longitude"
+    print(f"{message} dans le dataframe Agents : {coordinates_count}")
+    save_statistics("Agents", "latitude-longitude", coordinates_count, "str", message + " : ")
 
 
 def display_criterion_count_per_lot():
@@ -181,12 +200,33 @@ def display_criterion_count_per_lot():
 
     # Regrouper les données par lotId et compter le nombre de criterionId uniques dans chaque groupe
     criterion_count_per_lot = dataframeCriteria.groupby("lotId")["criterionId"].nunique()
+    message = "Nombre de criterionId par lotId"
+    print(f"{message} dans le dataframe Criteria : {criterion_count_per_lot}")
+    save_statistics("Criteria", "lotId-criterionId", criterion_count_per_lot, "str", message + " : ")
 
-    print(f"Nombre de criterionId par lotId dans le dataframe Criteria :")
-    print(criterion_count_per_lot)
-
-    print(f"Statistiques descriptives du nombre de criterionId par lotId dans le dataframe Criteria :")
+    message = "Statistiques descriptives du nombre de criterionId par lotId"
+    print(f"{message} dans le dataframe Criteria : ")
     print(criterion_count_per_lot.describe())
+    save_statistics("Criteria", "lotId-criterionId", criterion_count_per_lot.describe(), "standard", message + " : ")
+
+
+def save_statistics(table_name, column, stats, status, message):
+    # Create directory if it doesn't exist
+    directory = "stats/" + table_name
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Write statistics to file
+    file_path = os.path.join(directory, f"{column}_stats.txt")
+    with open(file_path, "a") as file:
+        if os.path.exists(file_path) and os.stat(file_path).st_size == 0:
+            if status == "mode":
+                file.write(f"{message}{str(stats)}\n")
+            if status == "str":
+                file.write(f"{message}{str(stats)}\n")
+            if status == "standard":
+                file.write(f"{message}\n")
+                file.write(stats.to_string() + "\n")
 
 
 # Main function
