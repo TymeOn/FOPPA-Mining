@@ -61,7 +61,7 @@ column_types = {
     },
     "Names": {
         "agentId": "Int64",
-        "names": "str"
+        "name": "str"
     }
 }
 boolean_columns = [
@@ -103,29 +103,107 @@ def load_data():
 
 
 # Calculating standard statistics
-def calculate_statistics():
-    for file_name in file_names:
-        if file_name == "Lots":
-            # Select only numeric columns
-            numeric_columns = ["lotId", "tedCanId", "correctionsNb", "awardEstimatedPrice", "awardPrice",
-                               "numberTenders", "lotsNumber", "numberTendersSme", "contractDuration",
-                               "publicityDuration"]
-            numeric_data = dataframes[file_name][numeric_columns]
+def calculate_standard_statistics(table_name):
+    print(f"\nStatistiques standard pour le fichier {table_name} :")
+
+    for column, dtype in column_types[table_name].items():
+        if dtype == "Int64" or dtype == "Float64":
+            print(f"Champ: {column}")
+            numeric_data = dataframes[table_name][column]
 
             # Calculate statistics
             stats = numeric_data.describe()
 
-            # Calculate mode
-            mode = numeric_data.mode().iloc[0]
-
             # Display statistics
-            print(f"\nStatistiques pour le fichier {file_name}:")
             print(stats)
 
-            # Display mode
-            print("\n##### Mode #####")
-            for col, val in mode.items():
-                print(f"{col}: {val}")
+
+def str_statistics(table_name):
+        str_data = dataframes[table_name]
+
+        # Parcourir chaque colonne
+        for column, dtype in column_types[table_name].items():
+            if dtype == "str":
+                unique_values = str_data[column].unique()
+
+                # Si le nombre de valeurs uniques est supérieur à 1, il y a des valeurs différentes
+                if len(unique_values) > 1:
+                    print(f"\nChamp: {column}")
+
+                    # Afficher la valeur la plus courante
+                    most_common_value = str_data[column].mode().iloc[0]
+                    print(f"\nLa valeur la plus courante : {most_common_value}")
+
+                    print(f"\nValeurs différentes : {unique_values}")
+
+                    # Afficher le nombre de fois que chaque valeur apparaît
+                    value_counts = str_data[column].value_counts()
+                    print(f"\nNombre de fois que chaque valeur apparaît : {value_counts}")
+
+                    # Afficher le nombre de valeurs uniques
+                    unique_count = len(unique_values)
+                    print(f"\nNombre de valeurs uniques dans la colonne '{column}' : {unique_count}")
+
+
+def display_unique_coordinates():
+    """
+    Affiche le nombre total de combinaisons uniques de latitude et longitude,
+    ainsi que le nombre de fois que chaque valeur apparaît, la valeur la plus courante,
+    et les valeurs différentes.
+    """
+
+    dataframeAgent = dataframes['Agents'].dropna(subset=['latitude', 'longitude'])
+
+    # Créer une colonne unique pour la position en concaténant latitude et longitude
+    coordinates = dataframeAgent["latitude"].astype(str) + "," + dataframeAgent["longitude"].astype(str)
+
+    # Afficher le nombre de fois que chaque valeur apparaît
+    print(f"Nombre de fois que chaque combinaison de latitude et longitude apparaît dans le dataframe Agents :")
+    print(coordinates.value_counts())
+
+    # Afficher la valeur la plus courante
+    most_common_coordinates = coordinates.mode().iloc[0]
+    print(f"La combinaison de latitude et longitude la plus courante dans le dataframe Agents : {most_common_coordinates}")
+
+    # Afficher les valeurs différentes
+    unique_coordinates = coordinates.unique()
+    print(f"Combinaisons de latitude et longitude différentes dans le dataframe Agents : {unique_coordinates}")
+
+    # Afficher le nombre total de combinaisons uniques de latitude et longitude
+    unique_count = len(unique_coordinates)
+    print(f"Nombre total de combinaisons uniques de latitude et longitude dans le dataframe Agents : {unique_count}")
+
+
+def display_criterion_count_per_lot():
+    """
+    Affiche le nombre de criterionId par lotId.
+    """
+    dataframeCriteria = dataframes['Criteria']
+
+    # Regrouper les données par lotId et compter le nombre de criterionId uniques dans chaque groupe
+    criterion_count_per_lot = dataframeCriteria.groupby("lotId")["criterionId"].nunique()
+
+    print(f"Nombre de criterionId par lotId dans le dataframe Criteria :")
+    print(criterion_count_per_lot)
+
+    print(f"Statistiques descriptives du nombre de criterionId par lotId dans le dataframe Criteria :")
+    print(criterion_count_per_lot.describe())
+
+
+def describe_weight_of_criteria():
+    """
+    Affiche les statistiques descriptives du poids (weight) de Criteria,
+    ainsi que le mode.
+    """
+    criteriaDataframe = dataframes["Criteria"].dropna(subset=['weight'])
+
+    print("Statistiques descriptives du poids (weight) de Criteria:")
+    print(criteriaDataframe["weight"].describe())
+
+    # Afficher le mode du poids
+    mode_weight = criteriaDataframe["weight"].mode()
+    print("Mode du poids (weight) de Criteria:")
+    print(mode_weight)
 
 
 # Main function
@@ -140,8 +218,21 @@ if __name__ == "__main__":
         print(df.head())
         print("\n")
 
-    # Calculating standard statistics
-    calculate_statistics()
+    # All statistics
+    calculate_standard_statistics("Lots")
+    str_statistics("Lots")
+
+    calculate_standard_statistics("Agents")
+    str_statistics("Agents")
+    display_unique_coordinates()
+
+    calculate_standard_statistics("Criteria")
+    str_statistics("Criteria")
+    display_criterion_count_per_lot()
+    describe_weight_of_criteria()
+
+    calculate_standard_statistics("Names")
+    str_statistics("Names")
 
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
