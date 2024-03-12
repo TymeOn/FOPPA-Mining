@@ -164,6 +164,15 @@ def data_analysis():
         data = pd.DataFrame({'typeOfContract': data1, number_lots_column: data2})
         
         graphMaker.graph_double_maker(data, "typeOfContract", number_lots_column)
+    
+    data1 = dataframes["Lots"]["awardDate"].str[:4]
+    for number_lots_column in number_lots_columns:
+        data2 = pd.to_numeric(dataframes["Lots"][number_lots_column], errors='coerce')
+
+        # Create a new DataFrame with the desired columns
+        data = pd.DataFrame({'awardDate': data1, number_lots_column: data2})
+        
+        graphMaker.graph_double_maker(data, "awardDate", number_lots_column)
 
 
 #

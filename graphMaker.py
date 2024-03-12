@@ -56,22 +56,33 @@ def graph_frequency_maker(data, column):
     plt.savefig(f"charts_frequency/{column}_frequency_chart.png")
     
 def graph_double_maker(data, column1, column2):
-    # Create a dictionary to store values for each category
+    # creer les catégories uniques
     print(f"Graphiques {column1} et {column2}")
     categories = [category for category in data[column1] if category is not None and category != 'NaN']
     unique_categories = set(categories)
+    
+    # initialiser sommes et fréquences
     print("categorie de la classe: ", unique_categories)
     sommes = {category: 0 for category in unique_categories}
     frequency = {category: 0 for category in unique_categories}
 
+    # itérer le data frame
     for i, row in data.iterrows():
         if row[column1] in unique_categories and row[column2] is not None and isinstance(row[column2], (int, float)):
             sommes[row[column1]] += float(row[column2])
             frequency[row[column1]] += 1
+
+    # faire les moyennes
+    averages = {key: sommes[key] / frequency[key] if frequency[key] != 0 else 0 for key in unique_categories}
+    
+    # trier les frequences et les sommes
+    frequency = dict(sorted(frequency.items()))
+    sommes = dict(sorted(sommes.items()))
+    averages = dict(sorted(averages.items()))
+    
+    print("moyennes : ", averages)
     print("fréquence : ", frequency)
     print("sommes : ", sommes)
-    averages = {key: sommes[key] / frequency[key] if frequency[key] != 0 else 0 for key in unique_categories}
-    print("moyennes : ", averages)
     #Create a frequency histogram
     plt.figure(figsize=(10, 6))
     plt.bar(frequency.keys(), frequency.values(), color='red', alpha=0.7)
