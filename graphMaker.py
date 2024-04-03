@@ -107,3 +107,76 @@ def graph_double_maker(data, column1, column2):
     plt.title(f"Average {column2} by {column1}")
     plt.savefig(f"charts_two_columns/average_{column1}_{column2}_chart.png")
     print("\n")
+
+def tableau_boolean(Lots, boolean_columns, number_columns):
+    # Filter the DataFrame based on boolean columns
+    Lots[boolean_columns] = Lots[boolean_columns].astype(int)
+    Lots["bool_id"] = Lots[boolean_columns].astype(str).agg(''.join, axis=1)
+    unique_bools = set(Lots["bool_id"])
+    unique_bools = list(unique_bools)
+
+    sommes_dict = {
+        'bool_id': unique_bools,
+    }
+
+    frequency_dict = {
+        'bool_id': unique_bools,
+    }
+
+    average_dict = {
+        'bool_id': unique_bools,
+    }
+
+    for col in boolean_columns:
+        sommes_dict[col] = [0] * len(unique_bools)
+        frequency_dict[col] = [0] * len(unique_bools)
+        average_dict[col] = [0] * len(unique_bools)
+
+    for col in number_columns:
+        sommes_dict[col] = [0] * len(unique_bools)
+        frequency_dict[col] = [0] * len(unique_bools)
+        average_dict[col] = [0] * len(unique_bools)
+    
+    # Processing the data
+    for column in number_columns:
+        print("> traitement colonne: ", column)
+        for i, row in Lots.iterrows():
+            if row["bool_id"] in unique_bools and row[column] is not None and isinstance(row[column], (int, float)):
+                bool_id = row['bool_id']
+                
+                # Update sommes_dict
+                idx = sommes_dict['bool_id'].index(bool_id)
+                sommes_dict[column][idx] += row[column]
+                
+                # Update frequency_dict
+                idx = frequency_dict['bool_id'].index(bool_id)
+                frequency_dict[column][idx] += 1
+
+    
+    # Calculate average
+    for column in number_columns:
+        for idx, bool_val in enumerate(unique_bools):
+            if frequency_dict[column][idx] > 0:
+                sommes_dict[column][idx] = int(sommes_dict[column][idx])
+                average_dict[column][idx] = round(sommes_dict[column][idx] / frequency_dict[column][idx], 2)
+    
+    for index, col in enumerate(boolean_columns):
+        for idx, key in enumerate(unique_bools):
+            sommes_dict[col][idx] = int(key[index])
+            frequency_dict[col][idx] = int(key[index])
+            average_dict[col][idx] = int(key[index])
+            
+    del sommes_dict['bool_id']
+    del frequency_dict['bool_id']
+    del average_dict['bool_id']
+    
+    print(average_dict)
+    # Convert dictionaries to DataFrames
+    sommes = pd.DataFrame(sommes_dict)
+    frequency = pd.DataFrame(frequency_dict)
+    average = pd.DataFrame(average_dict)
+
+    # Save DataFrames as CSV files
+    sommes.to_csv("boolean_matrices/sommes.csv", sep=';', decimal=',', index=False)
+    frequency.to_csv("boolean_matrices/frequency.csv", sep=';', decimal=',', index=False)
+    average.to_csv("boolean_matrices/average.csv", sep=';', decimal=',', index=False)

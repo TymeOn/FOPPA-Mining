@@ -173,6 +173,9 @@ def data_analysis():
         data = pd.DataFrame({'awardDate': data1, number_lots_column: data2})
         
         graphMaker.graph_double_maker(data, "awardDate", number_lots_column)
+    
+    #tableau booléen
+    graphMaker.tableau_boolean(dataframes["Lots"], boolean_columns, number_lots_columns)
 
 
 #
