@@ -131,7 +131,7 @@ def str_statistics(table_name):
             most_common_value = str_data[column].mode().iloc[0]
             message= "La valeur la plus courante : "
             print(f"\n{message}{most_common_value}")
-            save_statistics(table_name, column, most_common_value, "mode", message)
+            save_statistics(table_name, column, most_common_value, "str", message)
 
             if dtype == "str":
                 unique_values = str_data[column].unique()
@@ -219,14 +219,28 @@ def save_statistics(table_name, column, stats, status, message):
     # Write statistics to file
     file_path = os.path.join(directory, f"{column}_stats.txt")
     with open(file_path, "a") as file:
-        if os.path.exists(file_path) and os.stat(file_path).st_size == 0:
-            if status == "mode":
-                file.write(f"{message}{str(stats)}\n")
+        if os.path.exists(file_path):
             if status == "str":
-                file.write(f"{message}{str(stats)}\n")
+                if message == "Nombre de fois que chaque valeur apparaît : ":
+                    file.write(f"{message}\n")
+                    file.write(f"\n")
+                    for index, value in stats.items():
+                        file.write(f"• {index} : {value}\n")
+                    file.write("\n")
+                elif message == "Valeurs différentes :":
+                    file.write(f"{message}\n")
+                    file.write(f"\n")
+                    for item in stats:
+                        file.write(f"• {item}\n")
+                    file.write("\n")
+                else:
+                    file.write(f"{message}{str(stats)}\n")
+                    file.write(f"\n")
             if status == "standard":
                 file.write(f"{message}\n")
+                file.write(f"\n")
                 file.write(stats.to_string() + "\n")
+                file.write(f"\n")
 
 
 # Main function
@@ -258,6 +272,3 @@ if __name__ == "__main__":
 
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
-
-    # Mesure d'association (Corréaltion pisson standard)
-
