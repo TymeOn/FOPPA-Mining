@@ -1,0 +1,6 @@
+distribution standard ?
+fréquence donnees numérique X
+occurences
+typeOfContract avec awardPrice
+typeOfContract avec lotsNumber
+typeOfContract avec numberTender

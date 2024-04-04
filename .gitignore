@@ -165,4 +165,8 @@ cython_debug/
 # IDE folder
 .idea/*
 
+# Statistics folder
 stats/*
+
+# Removed data folder
+/removedData/*.csv
