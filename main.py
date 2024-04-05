@@ -1,8 +1,15 @@
-import pandas as pd
-import numpy as np
 import os
+
 import matplotlib.pyplot as plt
-import csv
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import MinMaxScaler
+
 import graphMaker
 
 dataframes = {}
@@ -442,9 +449,6 @@ def merge_csv():
 
     data_lots.to_csv("data/merged_lots_data.csv", index=False)
 
-    # for label in data_lots.columns:
-    #     print(label)
-
 
 # Loading the specified CSV files into dataframes
 def load_data_all():
@@ -461,6 +465,139 @@ def load_data_all():
     return
 
 
+# Tracer le cercle de corrélation
+def correlation_circle(components, var_names, x_axis, y_axis, department_suppliers):
+    fig, axes = plt.subplots(figsize=(8, 8))
+    minx = -1
+    maxx = 1
+    miny = -1
+    maxy = 1
+    axes.set_xlim(minx, maxx)
+    axes.set_ylim(miny, maxy)
+
+    # Labels avec les noms de variables et les départements fournisseurs
+    for i in range(0, components.shape[1]):
+        axes.arrow(0, 0, components[0, i], components[1, i], head_width=0.01, head_length=0.02)
+        plt.text(components[0, i] + 0.05, components[1, i] + 0.05, var_names[i])
+
+    # Ajouter les départements fournisseurs
+    for i, txt in enumerate(department_suppliers):
+        plt.text(components[0, i], components[1, i], txt)
+
+    # Axes
+    plt.plot([minx, maxx], [0, 0], color='silver', linestyle='-', linewidth=1)
+    plt.plot([0, 0], [miny, maxy], color='silver', linestyle='-', linewidth=1)
+
+    # Ajouter un cercle
+    cercle = plt.Circle((0, 0), 1, color='blue', fill=False)
+    axes.add_artist(cercle)
+
+    plt.savefig('fig/correlation_circle.png')
+    plt.close(fig)
+
+
+def question2_analytics():
+    pivot_table = pd.pivot_table(dataframes_all, index='department_suppliers', columns='typeOfContract', aggfunc='size', fill_value=0)
+
+    pivot_table.plot(kind='bar', stacked=True, figsize=(12, 6))
+    plt.title('Nombre de lots par département fournisseur et par type de contrat')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/lots_par_departement_contrat.png')
+    plt.show()
+
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(pivot_table, cmap='coolwarm', annot=True, fmt='d')
+    plt.title('Distribution des lots par département fournisseur et par type de contrat')
+    plt.xlabel('Type de contrat')
+    plt.ylabel('Département fournisseur')
+    plt.tight_layout()
+    plt.savefig('fig/heatmap_lots_departement_contrat.png')
+    plt.show()
+
+    pivot_table.plot(kind='bar', figsize=(12, 6))
+    plt.title('Répartition des lots par département fournisseur et par type de contrat')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/repartition_lots_departement_contrat.png')
+    plt.show()
+
+    label_encoder = LabelEncoder()
+    dataframes_all['typeOfContract_encoded'] = label_encoder.fit_transform(dataframes_all['typeOfContract'])
+
+    # Créez un graphique à barres montrant le nombre de lots par département fournisseur
+    plt.figure(figsize=(10, 6))
+    dataframes_all['department_suppliers'].value_counts().plot(kind='bar', color='skyblue')
+    plt.title('Nombre de lots par département fournisseur')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/nombre_lots_par_departement_fournisseur.png')
+    plt.show()
+
+    pivot_table.to_csv('data/pivot_table.csv')
+
+    dataframes_pivot = pd.read_csv('data/pivot_table.csv', dtype=column_types_all["Lots"])
+
+    # Sélection des départements comme étiquettes
+    lst_labels = dataframes_pivot['department_suppliers']
+
+    # Suppression de la colonne des départements pour la construction de la matrice de distances
+    dataframes_pivot = dataframes_pivot.drop('department_suppliers', axis=1)
+
+    # Construction de la matrice de distances
+    Z = linkage(dataframes_pivot.values, method='ward')
+
+    # Tracé du dendrogramme
+    plt.figure(figsize=(10, 6))
+    dendrogram(Z, labels=lst_labels.to_list(), orientation='top', leaf_rotation=90)
+    plt.title('Dendrogramme de clustering hiérarchique')
+    plt.xlabel('Départements fournisseurs')
+    plt.ylabel('Distance')
+    plt.tight_layout()
+    plt.savefig('fig/dendrogramme_clustering_hierarchique.png')
+    plt.show()
+
+    # Réaliser une PCA sur les données
+    pca = PCA()
+    pca.fit(dataframes_pivot[['S', 'U', 'W']])
+
+    # Calculer les composantes principales (PC)
+    components = pca.components_.T * np.sqrt(pca.explained_variance_)
+
+    # Noms des variables
+    var_names = ['S', 'U', 'W']
+
+    correlation_circle(components, var_names, 0, 1, dataframes_pivot)
+
+    # Sélectionner uniquement les caractéristiques à utiliser pour le clustering
+    X = dataframes_pivot[['S', 'U', 'W']]
+
+    # Normaliser les données
+    scaler = MinMaxScaler()
+    X_norm = scaler.fit_transform(X)
+
+    # Effectuer le clustering KMeans
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    kmeans.fit(X_norm)
+    labels = kmeans.labels_
+
+    # Afficher les clusters
+    plt.figure(figsize=(8, 6))
+    plt.scatter(dataframes_pivot.index, labels, c=labels, cmap='viridis')
+    plt.title('Clustering KMeans des départements fournisseurs')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Cluster')
+    plt.xticks(rotation=45)
+    plt.savefig('fig/kmeans_department_clusters')
+    plt.show()
+
+
 # Main function
 if __name__ == "__main__":
 
@@ -468,7 +605,7 @@ if __name__ == "__main__":
     load_data()
 
     # DEBUG DISPLAY
-    
+
     for filename, df in dataframes.items():
         print(f"DataFrame pour le fichier {filename}:")
         print(df.head())
@@ -496,6 +633,8 @@ if __name__ == "__main__":
 
     # Loading data merged into dataframes all
     load_data_all()
+
+    question2_analytics()
 
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
