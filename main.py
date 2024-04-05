@@ -68,6 +68,66 @@ column_types = {
         "name": "str"
     }
 }
+
+dataframes_all = {}
+
+column_types_all = {
+    "Lots": {
+        "lotId": "Int64",
+        "tedCanId": "Int64",
+        "correctionsNb": "Int64",
+        "cancelled": "bool",
+        "awardDate": "str",
+        "awardEstimatedPrice": "Float64",
+        "awardPrice": "Float64",
+        "cpv": "str",
+        "numberTenders": "Int64",
+        "onBehalf": "bool",
+        "jointProcurement": "bool",
+        "fraAgreement": "bool",
+        "fraEstimated": "str",
+        "lotsNumber": "str",
+        "accelerated": "bool",
+        "outOfDirectives": "bool",
+        "contractorSme": "bool",
+        "numberTendersSme": "Int64",
+        "subContracted": "bool",
+        "gpa": "bool",
+        "multipleCae": "str",
+        "typeOfContract": "str",
+        "topType": "str",
+        "renewal": "bool",
+        "contractDuration": "Float64",
+        "publicityDuration": "Float64",
+        "suppliersId": "Int64",
+        "buyersId": "Int64",
+        "criterionId": "Int64",
+        "name_criteria": "str",
+        "weight": "Float64",
+        "type": "str",
+        "name_suppliers": "str",
+        "siret_suppliers": "str",
+        "address_suppliers": "str",
+        "city_suppliers": "str",
+        "zipcode_suppliers": "str",
+        "country_suppliers": "str",
+        "department_suppliers": "str",
+        "longitude_suppliers": "Float64",
+        "latitude_suppliers": "Float64",
+        "name_buyersId": "str",
+        "siret_buyersId": "str",
+        "address_buyersId": "str",
+        "city_buyersId": "str",
+        "zipcode_buyersId": "str",
+        "country_buyersId": "str",
+        "department_buyersId": "str",
+        "longitude_buyersId": "Float64",
+        "latitude_buyersId": "Float64",
+        "name2_buyers": "str",
+        "name2_suppliers": "str",
+    }
+}
+
 boolean_columns = [
     "cancelled",
     "onBehalf",
@@ -101,8 +161,14 @@ essentials_columns = {
     "Names" : [],
 }
 
+
 # Loading the specified CSV files into dataframes
 def load_data():
+    # Create directory if it doesn't exist
+    directory = "removedData/"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     for file_name in file_names:
         path = "data/" + file_name + ".csv"
 
@@ -119,11 +185,9 @@ def load_data():
                     dataframe[col] = dataframe[col].map(lambda x: x if x is None or pd.isna(x) or (0 <= x <= limit) else None)
                     final_na = dataframe[col].isna().sum()
                     limit_counter[col] = final_na - initial_na
-
-
-            if essentials_columns[file_name] == [] :
+            if not essentials_columns[file_name]:
                 na_free = dataframe.dropna()
-            else :
+            else:
                 na_free = dataframe.dropna(subset=essentials_columns[file_name])
             only_na = dataframe[~dataframe.index.isin(na_free.index)]
             only_na.to_csv("removedData/removed" + file_name + ".csv", sep=';', decimal=',', float_format='%.3f')
@@ -134,6 +198,7 @@ def load_data():
             print(f"Le fichier {path} n'existe pas.")
 
     return
+
 
 number_lots_columns = [
     "awardEstimatedPrice",
@@ -146,7 +211,6 @@ number_lots_columns = [
 ]
 
 
-    
 # Schéma et donnnées 
 def data_analysis():
     for column in number_lots_columns:
@@ -319,6 +383,84 @@ def save_statistics(table_name, column, stats, status, message):
                 file.write(f"\n")
 
 
+def merge_csv():
+    data_lot_suppliers = dataframes["LotSuppliers"].copy()
+    data_lot_suppliers.rename(columns={"agentId": "suppliersId"}, inplace=True)
+
+    data_lot_buyers = dataframes["LotBuyers"].copy()
+    data_lot_buyers.rename(columns={"agentId": "buyersId"}, inplace=True)
+
+    data_lots = dataframes["Lots"].copy()
+
+    data_lots = pd.merge(data_lots, data_lot_suppliers, on="lotId", how='left')
+    data_lots = pd.merge(data_lots, data_lot_buyers, on="lotId", how='left')
+
+    data_criteria = dataframes["Criteria"].copy()
+    data_criteria.rename(columns={"name": "name_criteria"}, inplace=True)
+    data_lots = pd.merge(data_lots, data_criteria, on="lotId", how='left')
+
+    data_agents_suppliers = dataframes["Agents"].copy()
+    data_agents_suppliers.rename(columns={"agentId": "suppliersId"}, inplace=True)
+    data_agents_suppliers.rename(columns={"name": "name_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"siret": "siret_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"address": "address_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"city": "city_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"zipcode": "zipcode_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"country": "country_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"department": "department_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"longitude": "longitude_suppliers"}, inplace=True)
+    data_agents_suppliers.rename(columns={"latitude": "latitude_suppliers"}, inplace=True)
+    data_lots = pd.merge(data_lots, data_agents_suppliers, on="suppliersId", how='left')
+
+    data_agents_buyers = dataframes["Agents"].copy()
+    data_agents_buyers.rename(columns={"agentId": "buyersId"}, inplace=True)
+    data_agents_buyers.rename(columns={"name": "name_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"siret": "siret_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"address": "address_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"city": "city_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"zipcode": "zipcode_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"country": "country_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"department": "department_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"longitude": "longitude_buyers"}, inplace=True)
+    data_agents_buyers.rename(columns={"latitude": "latitude_buyers"}, inplace=True)
+
+    data_lots = pd.merge(data_lots, data_agents_buyers, on="buyersId", how='left')
+
+    data_names_suppliers = dataframes["Names"].copy()
+    data_names_suppliers.rename(columns={"agentId": "suppliersId"}, inplace=True)
+    data_names_suppliers.rename(columns={"name": "name2_suppliers"}, inplace=True)
+
+    names_suppliers_dict = data_names_suppliers.set_index('suppliersId').to_dict()
+    data_lots['name2_suppliers'] = data_lots['suppliersId'].map(names_suppliers_dict['name2_suppliers'])
+
+    data_names_buyers = dataframes["Names"].copy()
+    data_names_buyers.rename(columns={"agentId": "buyersId"}, inplace=True)
+    data_names_buyers.rename(columns={"name": "name2_buyers"}, inplace=True)
+
+    names_buyers_dict = data_names_buyers.set_index('buyersId').to_dict()
+    data_lots['name2_buyers'] = data_lots['buyersId'].map(names_buyers_dict['name2_buyers'])
+
+    data_lots.to_csv("data/merged_lots_data.csv", index=False)
+
+    # for label in data_lots.columns:
+    #     print(label)
+
+
+# Loading the specified CSV files into dataframes
+def load_data_all():
+    global dataframes_all
+    path = "data/merged_lots_data.csv"
+
+    # Loading the individual file into a dataframe
+    if os.path.exists(path):
+        print("> Chargement du fichier  merged_lots_data ...")
+        dataframes_all = pd.read_csv(path, dtype=column_types_all["Lots"])
+        dataframes_all[integer_columns] = dataframes_all[integer_columns].apply(pd.to_numeric, errors='coerce')
+    else:
+        print(f"Le fichier {path} n'existe pas.")
+    return
+
+
 # Main function
 if __name__ == "__main__":
 
@@ -348,6 +490,12 @@ if __name__ == "__main__":
     str_statistics("Names")
 
     data_analysis()
-    
+
+    # Utilisation de la fonction merge_csv
+    merge_csv()
+
+    # Loading data merged into dataframes all
+    load_data_all()
+
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
