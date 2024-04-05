@@ -171,5 +171,4 @@ stats/*
 # Removed data folder
 /removedData/*.csv
 charts_frequency/*.png
-fig/*
 charts_two_columns/*.png
