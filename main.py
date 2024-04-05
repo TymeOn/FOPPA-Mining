@@ -508,15 +508,6 @@ def question2_analytics():
     plt.savefig('fig/lots_par_departement_contrat.png')
     plt.show()
 
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(pivot_table, cmap='coolwarm', annot=True, fmt='d')
-    plt.title('Distribution des lots par département fournisseur et par type de contrat')
-    plt.xlabel('Type de contrat')
-    plt.ylabel('Département fournisseur')
-    plt.tight_layout()
-    plt.savefig('fig/heatmap_lots_departement_contrat.png')
-    plt.show()
-
     pivot_table.plot(kind='bar', figsize=(12, 6))
     plt.title('Répartition des lots par département fournisseur et par type de contrat')
     plt.xlabel('Département fournisseur')
