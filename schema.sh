@@ -1,0 +1,4 @@
+python3 question.py question1 topType awardPrice distance
+python3 question.py question1 typeOfContract awardPrice distance
+python3 question.py question2 department_suppliers awardPrice numberTenders
+python3 question.py question2 department_buyers awardPrice numberTenders
