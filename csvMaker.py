@@ -21,5 +21,5 @@ def question2_csv(dataframe):
 
 if __name__ == "__main__":
     dataframe = pd.read_csv("./data/merged_lots_data.csv", low_memory=False)
-    #question1_csv(dataframe)
+    question1_csv(dataframe)
     question2_csv(dataframe)
