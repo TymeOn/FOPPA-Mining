@@ -654,13 +654,8 @@ if __name__ == "__main__":
     # Loading data merged into dataframes all
     load_data_all()
 
-    dataframes_dt_suppliers = pd.pivot_table(dataframes_all, index='department_suppliers', columns='typeOfContract',
-                                             aggfunc='size', fill_value=0)
-
-    print(dataframes_dt_suppliers)
-
-    dataframes_dt_buyers = pd.pivot_table(dataframes_all, index='department_buyers', columns='typeOfContract',
-                                          aggfunc='size', fill_value=0)
+    dataframes_dt_suppliers = pd.pivot_table(dataframes_all, index='department_suppliers', columns='typeOfContract', aggfunc='size', fill_value=0)
+    dataframes_dt_buyers = pd.pivot_table(dataframes_all, index='department_buyers', columns='typeOfContract', aggfunc='size', fill_value=0)
 
     question2_analytics_bar(dataframes_dt_suppliers, dataframes_dt_buyers)
     question2_analytics_hierarchical(dataframes_dt_suppliers, dataframes_dt_buyers)
