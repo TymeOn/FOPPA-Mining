@@ -172,3 +172,4 @@ stats/*
 /removedData/*.csv
 charts_frequency/*.png
 charts_two_columns/*.png
+/learningData/*.csv
