@@ -466,7 +466,7 @@ def load_data_all():
 
 
 # Tracer le cercle de corrélation
-def correlation_circle(components, var_names, x_axis, y_axis, department_suppliers):
+def correlation_circle(components, var_names, x_axis, y_axis, status):
     fig, axes = plt.subplots(figsize=(8, 8))
     minx = -1
     maxx = 1
@@ -474,124 +474,153 @@ def correlation_circle(components, var_names, x_axis, y_axis, department_supplie
     maxy = 1
     axes.set_xlim(minx, maxx)
     axes.set_ylim(miny, maxy)
-
-    # Labels avec les noms de variables et les départements fournisseurs
+    # label with variable names
+    # ignore first variable (instance name)
     for i in range(0, components.shape[1]):
-        axes.arrow(0, 0, components[0, i], components[1, i], head_width=0.01, head_length=0.02)
-        plt.text(components[0, i] + 0.05, components[1, i] + 0.05, var_names[i])
+        axes.arrow(0,
+                   0,  # Start the arrow at the origin
+                   components[i, x_axis],  # 0 for PC1
+                   components[i, y_axis],  # 1 for PC2
+                   head_width=0.01,
+                   head_length=0.02)
 
-    # Ajouter les départements fournisseurs
-    for i, txt in enumerate(department_suppliers):
-        plt.text(components[0, i], components[1, i], txt)
-
-    # Axes
+        plt.text(components[i, x_axis] + 0.05,
+                 components[i, y_axis] + 0.05,
+                 var_names[i])
+    # axes
     plt.plot([minx, maxx], [0, 0], color='silver', linestyle='-', linewidth=1)
     plt.plot([0, 0], [miny, maxy], color='silver', linestyle='-', linewidth=1)
-
-    # Ajouter un cercle
+    # add a circle
     cercle = plt.Circle((0, 0), 1, color='blue', fill=False)
     axes.add_artist(cercle)
-
-    plt.savefig('fig/correlation_circle.png')
+    plt.savefig('fig/acp_correlation_circle_axes_' + status + str(x_axis) + '_' + str(y_axis))
     plt.close(fig)
 
 
-def question2_analytics():
-    pivot_table = pd.pivot_table(dataframes_all, index='department_suppliers', columns='typeOfContract', aggfunc='size', fill_value=0)
-
-    pivot_table.plot(kind='bar', stacked=True, figsize=(12, 6))
+def question2_analytics_bar(dataframes_dt_suppliers, dataframes_dt_buyers):
+    dataframes_dt_suppliers.plot(kind='bar', stacked=True, figsize=(22, 6))
     plt.title('Nombre de lots par département fournisseur et par type de contrat')
     plt.xlabel('Département fournisseur')
     plt.ylabel('Nombre de lots')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('fig/lots_par_departement_contrat.png')
-    plt.show()
+    plt.savefig('fig/lots_par_departement_contrat_suppliers.png')
 
-    pivot_table.plot(kind='bar', figsize=(12, 6))
-    plt.title('Répartition des lots par département fournisseur et par type de contrat')
+    dataframes_dt_buyers.plot(kind='bar', stacked=True, figsize=(22, 6))
+    plt.title('Nombre de lots par département acheteur et par type de contrat')
     plt.xlabel('Département fournisseur')
     plt.ylabel('Nombre de lots')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('fig/repartition_lots_departement_contrat.png')
-    plt.show()
+    plt.savefig('fig/lots_par_departement_contrat_buyers.png')
 
-    label_encoder = LabelEncoder()
-    dataframes_all['typeOfContract_encoded'] = label_encoder.fit_transform(dataframes_all['typeOfContract'])
-
-    # Créez un graphique à barres montrant le nombre de lots par département fournisseur
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(22, 8))
     dataframes_all['department_suppliers'].value_counts().plot(kind='bar', color='skyblue')
     plt.title('Nombre de lots par département fournisseur')
     plt.xlabel('Département fournisseur')
     plt.ylabel('Nombre de lots')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('fig/nombre_lots_par_departement_fournisseur.png')
-    plt.show()
+    plt.savefig('fig/nombre_lots_par_departement_suppliers.png')
 
-    pivot_table.to_csv('data/pivot_table.csv')
+    plt.figure(figsize=(22, 8))
+    dataframes_all['department_buyers'].value_counts().plot(kind='bar', color='skyblue')
+    plt.title('Nombre de lots par département acheteur')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/nombre_lots_par_departement_buyers.png')
 
-    dataframes_pivot = pd.read_csv('data/pivot_table.csv', dtype=column_types_all["Lots"])
 
+def question2_analytics_hierarchical(dataframes_dt_suppliers, dataframes_dt_buyers):
     # Sélection des départements comme étiquettes
-    lst_labels = dataframes_pivot['department_suppliers']
-
-    # Suppression de la colonne des départements pour la construction de la matrice de distances
-    dataframes_pivot = dataframes_pivot.drop('department_suppliers', axis=1)
+    lst_labels_suppliers = dataframes_dt_suppliers.index
+    lst_labels_buyers = dataframes_dt_buyers.index
 
     # Construction de la matrice de distances
-    Z = linkage(dataframes_pivot.values, method='ward')
+    Z_suppliers = linkage(dataframes_dt_suppliers.values, method='ward')
+    Z_buyers = linkage(dataframes_dt_buyers.values, method='ward')
 
     # Tracé du dendrogramme
-    plt.figure(figsize=(10, 6))
-    dendrogram(Z, labels=lst_labels.to_list(), orientation='top', leaf_rotation=90)
-    plt.title('Dendrogramme de clustering hiérarchique')
+    plt.figure(figsize=(12, 6))
+    dendrogram(Z_suppliers, labels=lst_labels_suppliers, orientation='top', leaf_rotation=90)
+    plt.title('Dendrogramme de clustering hiérarchique des départements fournisseurs')
     plt.xlabel('Départements fournisseurs')
     plt.ylabel('Distance')
     plt.tight_layout()
-    plt.savefig('fig/dendrogramme_clustering_hierarchique.png')
-    plt.show()
+    plt.savefig('fig/dendrogram_clustering_hierarchical_suppliers.png')
 
+    # Tracé du dendrogramme
+    plt.figure(figsize=(12, 6))
+    dendrogram(Z_buyers, labels=lst_labels_buyers, orientation='top', leaf_rotation=90)
+    plt.title('Dendrogramme de clustering hiérarchique des départements acheteurs')
+    plt.xlabel('Départements acheteurs')
+    plt.ylabel('Distance')
+    plt.tight_layout()
+    plt.savefig('fig/dendrogram_clustering_hierarchical_buyers.png')
+
+
+def question2_analytics_pca(dataframes_dt_suppliers, dataframes_dt_buyers):
     # Réaliser une PCA sur les données
-    pca = PCA()
-    pca.fit(dataframes_pivot[['S', 'U', 'W']])
+    pca_suppliers = PCA()
+    pca_buyers = PCA()
+
+    pca_suppliers.fit(dataframes_dt_suppliers[['S', 'U', 'W']])
+    pca_buyers.fit(dataframes_dt_buyers[['S', 'U', 'W']])
 
     # Calculer les composantes principales (PC)
-    components = pca.components_.T * np.sqrt(pca.explained_variance_)
+    components_suppliers = pca_suppliers.components_.T * np.sqrt(pca_suppliers.explained_variance_)
+    components_buyers = pca_buyers.components_.T * np.sqrt(pca_buyers.explained_variance_)
 
     # Noms des variables
     var_names = ['S', 'U', 'W']
 
-    correlation_circle(components, var_names, 0, 1, dataframes_pivot)
+    correlation_circle(components_suppliers, var_names, 0, 1, 'suppliers')
+    correlation_circle(components_buyers, var_names, 0, 1, 'buyers')
 
     # Sélectionner uniquement les caractéristiques à utiliser pour le clustering
-    X = dataframes_pivot[['S', 'U', 'W']]
+    X_suppliers = dataframes_dt_suppliers[['S', 'U', 'W']]
+    X_buyers = dataframes_dt_buyers[['S', 'U', 'W']]
 
     # Normaliser les données
-    scaler = MinMaxScaler()
-    X_norm = scaler.fit_transform(X)
+    scaler_suppliers = MinMaxScaler()
+    scaler_buyers = MinMaxScaler()
+
+    X_norm_suppliers = scaler_suppliers.fit_transform(X_suppliers)
+    X_norm_buyers = scaler_buyers.fit_transform(X_buyers)
 
     # Effectuer le clustering KMeans
-    kmeans = KMeans(n_clusters=3, random_state=42)
-    kmeans.fit(X_norm)
-    labels = kmeans.labels_
+    kmeans_suppliers = KMeans(n_clusters=3, random_state=42)
+    kmeans_buyers = KMeans(n_clusters=3, random_state=42)
+
+    kmeans_suppliers.fit(X_norm_suppliers)
+    kmeans_buyers.fit(X_norm_buyers)
+
+    labels_suppliers = kmeans_suppliers.labels_
+    labels_buyers = kmeans_buyers.labels_
 
     # Afficher les clusters
-    plt.figure(figsize=(8, 6))
-    plt.scatter(dataframes_pivot.index, labels, c=labels, cmap='viridis')
+    plt.figure(figsize=(22, 6))
+    plt.scatter(dataframes_dt_suppliers.index, labels_suppliers, c=labels_suppliers, cmap='viridis')
     plt.title('Clustering KMeans des départements fournisseurs')
     plt.xlabel('Département fournisseur')
     plt.ylabel('Cluster')
     plt.xticks(rotation=45)
-    plt.savefig('fig/kmeans_department_clusters')
-    plt.show()
+    plt.savefig('fig/kmeans_department_clusters_suppliers')
+
+    # Afficher les clusters
+    plt.figure(figsize=(22, 6))
+    plt.scatter(dataframes_dt_buyers.index, labels_buyers, c=labels_buyers, cmap='viridis')
+    plt.title('Clustering KMeans des départements acheteurs')
+    plt.xlabel('Département acheteur')
+    plt.ylabel('Cluster')
+    plt.xticks(rotation=45)
+    plt.savefig('fig/kmeans_department_clusters_buyers')
 
 
 # Main function
 if __name__ == "__main__":
-
     # Loading the files into dataframes
     load_data()
 
@@ -625,7 +654,17 @@ if __name__ == "__main__":
     # Loading data merged into dataframes all
     load_data_all()
 
-    question2_analytics()
+    dataframes_dt_suppliers = pd.pivot_table(dataframes_all, index='department_suppliers', columns='typeOfContract',
+                                             aggfunc='size', fill_value=0)
+
+    print(dataframes_dt_suppliers)
+
+    dataframes_dt_buyers = pd.pivot_table(dataframes_all, index='department_buyers', columns='typeOfContract',
+                                          aggfunc='size', fill_value=0)
+
+    question2_analytics_bar(dataframes_dt_suppliers, dataframes_dt_buyers)
+    question2_analytics_hierarchical(dataframes_dt_suppliers, dataframes_dt_buyers)
+    question2_analytics_pca(dataframes_dt_suppliers, dataframes_dt_buyers)
 
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
