@@ -170,3 +170,4 @@ stats/*
 
 # Removed data folder
 /removedData/*.csv
+/learningData/*.csv
