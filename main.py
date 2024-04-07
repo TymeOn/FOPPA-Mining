@@ -465,38 +465,6 @@ def load_data_all():
     return
 
 
-# Tracer le cercle de corrélation
-def correlation_circle(components, var_names, x_axis, y_axis, status):
-    fig, axes = plt.subplots(figsize=(8, 8))
-    minx = -1
-    maxx = 1
-    miny = -1
-    maxy = 1
-    axes.set_xlim(minx, maxx)
-    axes.set_ylim(miny, maxy)
-    # label with variable names
-    # ignore first variable (instance name)
-    for i in range(0, components.shape[1]):
-        axes.arrow(0,
-                   0,  # Start the arrow at the origin
-                   components[i, x_axis],  # 0 for PC1
-                   components[i, y_axis],  # 1 for PC2
-                   head_width=0.01,
-                   head_length=0.02)
-
-        plt.text(components[i, x_axis] + 0.05,
-                 components[i, y_axis] + 0.05,
-                 var_names[i])
-    # axes
-    plt.plot([minx, maxx], [0, 0], color='silver', linestyle='-', linewidth=1)
-    plt.plot([0, 0], [miny, maxy], color='silver', linestyle='-', linewidth=1)
-    # add a circle
-    cercle = plt.Circle((0, 0), 1, color='blue', fill=False)
-    axes.add_artist(cercle)
-    plt.savefig('fig/acp_correlation_circle_axes_' + status + str(x_axis) + '_' + str(y_axis))
-    plt.close(fig)
-
-
 def question2_analytics_bar(dataframes_dt_suppliers, dataframes_dt_buyers):
     dataframes_dt_suppliers.plot(kind='bar', stacked=True, figsize=(22, 6))
     plt.title('Nombre de lots par département fournisseur et par type de contrat')
@@ -561,24 +529,7 @@ def question2_analytics_hierarchical(dataframes_dt_suppliers, dataframes_dt_buye
     plt.savefig('fig/dendrogram_clustering_hierarchical_buyers.png')
 
 
-def question2_analytics_pca(dataframes_dt_suppliers, dataframes_dt_buyers):
-    # Réaliser une PCA sur les données
-    pca_suppliers = PCA()
-    pca_buyers = PCA()
-
-    pca_suppliers.fit(dataframes_dt_suppliers[['S', 'U', 'W']])
-    pca_buyers.fit(dataframes_dt_buyers[['S', 'U', 'W']])
-
-    # Calculer les composantes principales (PC)
-    components_suppliers = pca_suppliers.components_.T * np.sqrt(pca_suppliers.explained_variance_)
-    components_buyers = pca_buyers.components_.T * np.sqrt(pca_buyers.explained_variance_)
-
-    # Noms des variables
-    var_names = ['S', 'U', 'W']
-
-    correlation_circle(components_suppliers, var_names, 0, 1, 'suppliers')
-    correlation_circle(components_buyers, var_names, 0, 1, 'buyers')
-
+def question2_analytics_kmeans(dataframes_dt_suppliers, dataframes_dt_buyers):
     # Sélectionner uniquement les caractéristiques à utiliser pour le clustering
     X_suppliers = dataframes_dt_suppliers[['S', 'U', 'W']]
     X_buyers = dataframes_dt_buyers[['S', 'U', 'W']]
@@ -659,7 +610,7 @@ if __name__ == "__main__":
 
     question2_analytics_bar(dataframes_dt_suppliers, dataframes_dt_buyers)
     question2_analytics_hierarchical(dataframes_dt_suppliers, dataframes_dt_buyers)
-    question2_analytics_pca(dataframes_dt_suppliers, dataframes_dt_buyers)
+    question2_analytics_kmeans(dataframes_dt_suppliers, dataframes_dt_buyers)
 
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
