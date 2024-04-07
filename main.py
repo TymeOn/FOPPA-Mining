@@ -1,8 +1,15 @@
-import pandas as pd
-import numpy as np
 import os
+
 import matplotlib.pyplot as plt
-import csv
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import MinMaxScaler
+
 import graphMaker
 
 dataframes = {}
@@ -442,9 +449,6 @@ def merge_csv():
 
     data_lots.to_csv("data/merged_lots_data.csv", index=False)
 
-    # for label in data_lots.columns:
-    #     print(label)
-
 
 # Loading the specified CSV files into dataframes
 def load_data_all():
@@ -461,14 +465,118 @@ def load_data_all():
     return
 
 
+def question2_analytics_bar(dataframes_dt_suppliers, dataframes_dt_buyers):
+    dataframes_dt_suppliers.plot(kind='bar', stacked=True, figsize=(22, 6))
+    plt.title('Nombre de lots par département fournisseur et par type de contrat')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/lots_par_departement_contrat_suppliers.png')
+
+    dataframes_dt_buyers.plot(kind='bar', stacked=True, figsize=(22, 6))
+    plt.title('Nombre de lots par département acheteur et par type de contrat')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/lots_par_departement_contrat_buyers.png')
+
+    plt.figure(figsize=(22, 8))
+    dataframes_all['department_suppliers'].value_counts().plot(kind='bar', color='skyblue')
+    plt.title('Nombre de lots par département fournisseur')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/nombre_lots_par_departement_suppliers.png')
+
+    plt.figure(figsize=(22, 8))
+    dataframes_all['department_buyers'].value_counts().plot(kind='bar', color='skyblue')
+    plt.title('Nombre de lots par département acheteur')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Nombre de lots')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('fig/nombre_lots_par_departement_buyers.png')
+
+
+def question2_analytics_hierarchical(dataframes_dt_suppliers, dataframes_dt_buyers):
+    # Sélection des départements comme étiquettes
+    lst_labels_suppliers = dataframes_dt_suppliers.index
+    lst_labels_buyers = dataframes_dt_buyers.index
+
+    # Construction de la matrice de distances
+    Z_suppliers = linkage(dataframes_dt_suppliers.values, method='ward')
+    Z_buyers = linkage(dataframes_dt_buyers.values, method='ward')
+
+    # Tracé du dendrogramme
+    plt.figure(figsize=(12, 6))
+    dendrogram(Z_suppliers, labels=lst_labels_suppliers, orientation='top', leaf_rotation=90)
+    plt.title('Dendrogramme de clustering hiérarchique des départements fournisseurs')
+    plt.xlabel('Départements fournisseurs')
+    plt.ylabel('Distance')
+    plt.tight_layout()
+    plt.savefig('fig/dendrogram_clustering_hierarchical_suppliers.png')
+
+    # Tracé du dendrogramme
+    plt.figure(figsize=(12, 6))
+    dendrogram(Z_buyers, labels=lst_labels_buyers, orientation='top', leaf_rotation=90)
+    plt.title('Dendrogramme de clustering hiérarchique des départements acheteurs')
+    plt.xlabel('Départements acheteurs')
+    plt.ylabel('Distance')
+    plt.tight_layout()
+    plt.savefig('fig/dendrogram_clustering_hierarchical_buyers.png')
+
+
+def question2_analytics_kmeans(dataframes_dt_suppliers, dataframes_dt_buyers):
+    # Sélectionner uniquement les caractéristiques à utiliser pour le clustering
+    X_suppliers = dataframes_dt_suppliers[['S', 'U', 'W']]
+    X_buyers = dataframes_dt_buyers[['S', 'U', 'W']]
+
+    # Normaliser les données
+    scaler_suppliers = MinMaxScaler()
+    scaler_buyers = MinMaxScaler()
+
+    X_norm_suppliers = scaler_suppliers.fit_transform(X_suppliers)
+    X_norm_buyers = scaler_buyers.fit_transform(X_buyers)
+
+    # Effectuer le clustering KMeans
+    kmeans_suppliers = KMeans(n_clusters=3, random_state=42)
+    kmeans_buyers = KMeans(n_clusters=3, random_state=42)
+
+    kmeans_suppliers.fit(X_norm_suppliers)
+    kmeans_buyers.fit(X_norm_buyers)
+
+    labels_suppliers = kmeans_suppliers.labels_
+    labels_buyers = kmeans_buyers.labels_
+
+    # Afficher les clusters
+    plt.figure(figsize=(22, 6))
+    plt.scatter(dataframes_dt_suppliers.index, labels_suppliers, c=labels_suppliers, cmap='viridis')
+    plt.title('Clustering KMeans des départements fournisseurs')
+    plt.xlabel('Département fournisseur')
+    plt.ylabel('Cluster')
+    plt.xticks(rotation=45)
+    plt.savefig('fig/kmeans_department_clusters_suppliers')
+
+    # Afficher les clusters
+    plt.figure(figsize=(22, 6))
+    plt.scatter(dataframes_dt_buyers.index, labels_buyers, c=labels_buyers, cmap='viridis')
+    plt.title('Clustering KMeans des départements acheteurs')
+    plt.xlabel('Département acheteur')
+    plt.ylabel('Cluster')
+    plt.xticks(rotation=45)
+    plt.savefig('fig/kmeans_department_clusters_buyers')
+
+
 # Main function
 if __name__ == "__main__":
-
     # Loading the files into dataframes
     load_data()
 
     # DEBUG DISPLAY
-    
+
     for filename, df in dataframes.items():
         print(f"DataFrame pour le fichier {filename}:")
         print(df.head())
@@ -496,6 +604,13 @@ if __name__ == "__main__":
 
     # Loading data merged into dataframes all
     load_data_all()
+
+    dataframes_dt_suppliers = pd.pivot_table(dataframes_all, index='department_suppliers', columns='typeOfContract', aggfunc='size', fill_value=0)
+    dataframes_dt_buyers = pd.pivot_table(dataframes_all, index='department_buyers', columns='typeOfContract', aggfunc='size', fill_value=0)
+
+    question2_analytics_bar(dataframes_dt_suppliers, dataframes_dt_buyers)
+    question2_analytics_hierarchical(dataframes_dt_suppliers, dataframes_dt_buyers)
+    question2_analytics_kmeans(dataframes_dt_suppliers, dataframes_dt_buyers)
 
     # for file_name in file_names:
     #     dataframes[file_name].to_csv(file_name + "_clean.csv", index = False)
